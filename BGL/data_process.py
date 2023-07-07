@@ -17,9 +17,9 @@ PAD = 0
 UNK = 1
 START = 2
 
-data_dir = os.path.expanduser("~/.dataset/bgl")
+data_dir = 'input'
 output_dir = "../output/bgl/"
-log_file = "BGL.log"
+log_file = "training.log"
 
 
 # In the first column of the log, "-" indicates non-alert messages while others are alert messages.
@@ -63,7 +63,7 @@ def deeplog_file_generator(filename, df, features):
 
 
 def parse_log(input_dir, output_dir, log_file, parser_type):
-    log_format = '<Label> <Id> <Date> <Code1> <Time> <Code2> <Component1> <Component2> <Level> <Content>'
+    log_format = '<Label> <Time> <Content>'#<Code1> <Time> <Code2> <Component1> <Component2> <Level> <Content>'
     regex = [
         r'(0x)[0-9a-fA-F]+', #hexadecimal
         r'\d+.\d+.\d+.\d+',
@@ -121,15 +121,15 @@ if __name__ == "__main__":
     # Transformation #
     ##################
     # mins
-    window_size = 5
+    window_size = 60
     step_size = 1
     train_ratio = 0.4
 
     df = pd.read_csv(f'{output_dir}{log_file}_structured.csv')
 
     # data preprocess
-    df['datetime'] = pd.to_datetime(df['Time'], format='%Y-%m-%d-%H.%M.%S.%f')
-    df["Label"] = df["Label"].apply(lambda x: int(x != "-"))
+    df['datetime'] = pd.to_datetime(df['Time'], format='%Y-%m-%d-%H.%M.%S')
+    # df["Label"] = df["Label"].apply(lambda x: int(x != "-"))
     df['timestamp'] = df["datetime"].values.astype(np.int64) // 10 ** 9
     df['deltaT'] = df['datetime'].diff() / np.timedelta64(1, 's')
     df['deltaT'].fillna(0)
