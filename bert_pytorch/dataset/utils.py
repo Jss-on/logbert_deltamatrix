@@ -5,6 +5,13 @@ import torch
 
 
 def save_parameters(options, filename):
+    # Check if the directory exists
+    directory = os.path.dirname(filename)
+    if not os.path.exists(directory):
+        # Create the directory if it doesn't exist
+        os.makedirs(directory)
+    
+    # Save the parameters
     with open(filename, "w+") as f:
         for key in options.keys():
             f.write("{}: {}\n".format(key, options[key]))
