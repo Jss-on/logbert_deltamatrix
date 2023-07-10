@@ -128,7 +128,7 @@ if __name__ == "__main__":
     df = pd.read_csv(f'{output_dir}{log_file}_structured.csv')
 
     # data preprocess
-    df['datetime'] = pd.to_datetime(df['Time'], format='%m-%d-%y-%H:%M:%S')
+    df['datetime'] = pd.to_datetime(df['Time'], format='%Y-%d-%m-%H:%M:%S')
     # df["Label"] = df["Label"].apply(lambda x: int(x != "-"))
     df['timestamp'] = df["datetime"].values.astype(np.int64) // 10 ** 9
     df['deltaT'] = df['datetime'].diff() / np.timedelta64(1, 's')
