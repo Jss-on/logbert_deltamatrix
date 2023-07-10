@@ -11,7 +11,7 @@ import argparse
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 
 from bert_pytorch.dataset import WordVocab
-from bert_pytorch import Predictor, Trainer
+from bert_pytorch import Predictor, Trainer, Inference
 from logdeep.tools.utils import *
 
 options = dict()
@@ -109,8 +109,8 @@ if __name__ == "__main__":
         Predictor(options).predict()
 
     elif args.mode == 'predict_single':
-        predictor = Predictor(options)
-        predictor.predict_single_sequence(args.sequence)
+        inference = Inference(options)
+        inference.predict_single_sequence()
 
     elif args.mode == 'vocab':
         with open(options["train_vocab"], 'r') as f:
