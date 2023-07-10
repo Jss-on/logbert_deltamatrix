@@ -63,7 +63,7 @@ def deeplog_file_generator(filename, df, features):
 
 
 def parse_log(input_dir, output_dir, log_file, parser_type):
-    log_format = '<Label> <Time> <Content>'#<Code1> <Time> <Code2> <Component1> <Component2> <Level> <Content>'
+    log_format = '<Time> <Label> <Content>'#<Code1> <Time> <Code2> <Component1> <Component2> <Level> <Content>'
     regex = [
         r'(0x)[0-9a-fA-F]+', #hexadecimal
         r'\d+.\d+.\d+.\d+',
