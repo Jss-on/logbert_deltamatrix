@@ -86,6 +86,12 @@ if __name__ == "__main__":
     predict_parser.set_defaults(mode='predict')
     predict_parser.add_argument("-m", "--mean", type=float, default=0)
     predict_parser.add_argument("-s", "--std", type=float, default=1)
+    predict_parser.add_argument("-d", "--data", type=list, default = [])
+
+    predict_single_parser = subparsers.add_parser('predict_single')
+    predict_single_parser.set_defaults(mode='predict_single')
+    predict_single_parser.add_argument("-s", "--sequence", type=str, default="")
+
 
     vocab_parser = subparsers.add_parser('vocab')
     vocab_parser.set_defaults(mode='vocab')
@@ -95,8 +101,6 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     print("arguments", args)
-    # Trainer(options).train()
-    # Predictor(options).predict()
 
     if args.mode == 'train':
         Trainer(options).train()
@@ -104,12 +108,17 @@ if __name__ == "__main__":
     elif args.mode == 'predict':
         Predictor(options).predict()
 
+    elif args.mode == 'predict_single':
+        predictor = Predictor(options)
+        predictor.predict_single_sequence(args.sequence)
+
     elif args.mode == 'vocab':
         with open(options["train_vocab"], 'r') as f:
             logs = f.readlines()
         vocab = WordVocab(logs)
         print("vocab_size", len(vocab))
         vocab.save_vocab(options["vocab_path"])
+
 
 
 
