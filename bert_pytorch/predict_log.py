@@ -11,7 +11,7 @@ from torch.utils.data import DataLoader
 from bert_pytorch.dataset import WordVocab
 from bert_pytorch.dataset import LogDataset
 from bert_pytorch.dataset.sample import fixed_window
-
+import ast
 
 def compute_anomaly(results, params, seq_threshold=0.5):
     is_logkey = params["is_logkey"]
@@ -226,6 +226,57 @@ class Predictor():
         # for hypersphere distance
         return total_results, output_cls
 
+
+    def predict_single_sequence(self, logkey_sequence_file):
+      # logkey_sequence = ast.literal_eval(logkey_sequence_str)
+      # Load the model and vocabulary
+      # Read the log keys from the file
+      with open(logkey_sequence_file, 'r') as f:
+          logkey_sequence_str = f.read().strip()
+      logkey_sequence = logkey_sequence_str.split()
+      model = torch.load(self.model_path)
+      model.to(self.device)
+      model.eval()
+      vocab = WordVocab.load_vocab(self.vocab_path)
+
+      # Convert your single sequence of log keys into the format expected by the model
+      logkey_test = [logkey_sequence]  # Wrap your sequence in a list
+      time_test = [[0]*len(logkey_sequence)]  # Create a dummy list of timestamps
+
+      print(logkey_sequence)  # Should output: 500
+
+      # Create a DataLoader for your single sequence
+      seq_dataset = LogDataset(logkey_test, time_test, vocab, seq_len=len(logkey_sequence),
+                              corpus_lines=self.corpus_lines, on_memory=self.on_memory, predict_mode=True, mask_ratio=self.mask_ratio)
+      print(len(seq_dataset[0][0]))  # Should output: 500
+
+      data_loader = DataLoader(seq_dataset, batch_size=1, num_workers=1, collate_fn=seq_dataset.collate_fn)
+      print(data_loader)
+      # Iterate over the DataLoader (there will only be one batch since it's a single sequence)
+      for data in data_loader:
+          data = {key: value.to(self.device) for key, value in data.items()}
+          print(data['bert_input'].shape)
+          # Apply the model to the data and collect the results
+          result = model(data["bert_input"], data["time_input"])
+          mask_lm_output = result["logkey_output"]
+
+          
+          # Check for anomalies in the log keys
+          mask_index = data["bert_label"][0] > 0
+          num_undetected, output_seq = self.detect_logkey_anomaly(mask_lm_output[0][mask_index], data["bert_label"][0][mask_index])
+          num_masked = torch.sum(mask_index).tolist()
+          # If there are any undetected tokens, the sequence is abnormal
+          if num_undetected > 0:
+              print("The sequence is abnormal.")
+          else:
+              print("The sequence is normal.")
+
+          print(f'Undetected Tokens: {num_undetected}')
+          print(f"Masked Tokens: {num_masked}")
+          print(f"Total Logkey: {torch.sum(data['bert_input'][0] > 0).item()}")
+          print(f"Output sequence Length: {len(output_seq)}")
+          print(f"Output_sequence: {output_seq}")
+         
     def predict(self):
         model = torch.load(self.model_path)
         model.to(self.device)
