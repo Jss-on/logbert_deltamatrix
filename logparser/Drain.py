@@ -249,7 +249,9 @@ class LogParser:
         rootNode = Node()
         logCluL = []
 
+        print("Starting loading")
         self.load_data()
+        print("Loading Completed")
 
         count = 0
         for idx, line in self.df_log.iterrows():
