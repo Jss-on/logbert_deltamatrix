@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 import hashlib
 from datetime import datetime
-
+from tqdm import tqdm
 
 class Logcluster:
     def __init__(self, logTemplate='', logIDL=None):
@@ -254,7 +254,9 @@ class LogParser:
         print("Loading Completed")
 
         count = 0
-        for idx, line in self.df_log.iterrows():
+
+        # Wrap the df_log with tqdm to create a progress bar
+        for idx, line in tqdm(self.df_log.iterrows(), total=len(self.df_log), desc="Processing log lines"):
 
             logID = line['LineId']
             logmessageL = self.preprocess(line['Content']).strip().split()
@@ -275,8 +277,6 @@ class LogParser:
                     matchCluster.logTemplate = newTemplate
 
             count += 1
-            if count % 1000 == 0 or count == len(self.df_log):
-                print('Processed {0:.1f}% of log lines.'.format(count * 100.0 / len(self.df_log)), end='\r')
 
         if not os.path.exists(self.savePath):
             os.makedirs(self.savePath)
@@ -284,7 +284,7 @@ class LogParser:
         self.outputResult(logCluL)
 
         print('Parsing done. [Time taken: {!s}]'.format(datetime.now() - start_time))
-
+        
     def load_data(self):
         headers, regex = self.generate_logformat_regex(self.log_format)
         self.df_log = self.log_to_dataframe(os.path.join(self.path, self.logName), regex, headers, self.log_format)
