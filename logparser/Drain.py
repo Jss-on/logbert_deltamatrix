@@ -241,7 +241,72 @@ class LogParser:
             return 1
         for child in node.childD:
             self.printTree(node.childD[child], dep + 1)
+    def parse_sample(self, logName):
+        print('Parsing file: ' + os.path.join(self.path, logName))
+        start_time = datetime.now()
+        self.logName = logName
+        rootNode = Node()
+        logCluL = []
 
+        print("Starting loading")
+        self.load_data()
+        print("Loading Completed")
+
+        count = 0
+
+        # Wrap the df_log with tqdm to create a progress bar
+        for idx, line in tqdm(self.df_log.iterrows(), total=len(self.df_log), desc="Processing log lines"):
+
+            logID = line['LineId']
+            logmessageL = self.preprocess(line['Content']).strip().split()
+            # logmessageL = filter(lambda x: x != '', re.split('[\s=:,]', self.preprocess(line['Content'])))
+            matchCluster = self.treeSearch(rootNode, logmessageL)
+
+            # Match no existing log cluster
+            if matchCluster is None:
+                newCluster = Logcluster(logTemplate=logmessageL, logIDL=[logID])
+                logCluL.append(newCluster)
+                self.addSeqToPrefixTree(rootNode, newCluster)
+
+            # Add the new log message to the existing cluster
+            else:
+                newTemplate = self.getTemplate(logmessageL, matchCluster.logTemplate)
+                matchCluster.logIDL.append(logID)
+                if ' '.join(newTemplate) != ' '.join(matchCluster.logTemplate):
+                    matchCluster.logTemplate = newTemplate
+
+            count += 1
+
+        # if not os.path.exists(self.savePath):
+        #     os.makedirs(self.savePath)
+
+        # self.outputResult(logCluL)
+        logClust = logCluL.copy()
+        log_templates = [0] * self.df_log.shape[0]
+        log_templateids = [0] * self.df_log.shape[0]
+        df_events = []
+        for logClust in logClust:
+            template_str = ' '.join(logClust.logTemplate)
+            occurrence = len(logClust.logIDL)
+            template_id = hashlib.md5(template_str.encode('utf-8')).hexdigest()[0:8]
+            for logID in logClust.logIDL:
+                logID -= 1
+                log_templates[logID] = template_str
+                log_templateids[logID] = template_id
+            df_events.append([template_id, template_str, occurrence])
+
+        df_event = pd.DataFrame(df_events, columns=['EventId', 'EventTemplate', 'Occurrences'])
+        self.df_log['EventId'] = log_templateids
+        self.df_log['EventTemplate'] = log_templates
+
+
+
+        print('Parsing done. [Time taken: {!s}]'.format(datetime.now() - start_time))
+
+        return log_templateids
+
+
+    
     def parse(self, logName):
         print('Parsing file: ' + os.path.join(self.path, logName))
         start_time = datetime.now()
