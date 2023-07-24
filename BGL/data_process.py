@@ -121,9 +121,9 @@ if __name__ == "__main__":
     # Transformation #
     ##################
     # mins
-    window_size = 50
+    window_size = 60
     step_size = 1
-    train_ratio = 0.4
+    train_ratio = 0.8
 
     df = pd.read_csv(f'{output_dir}{log_file}_structured.csv')
 
