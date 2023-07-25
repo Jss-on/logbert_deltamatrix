@@ -126,13 +126,19 @@ if __name__ == "__main__":
     train_ratio = 0.8
 
     df = pd.read_csv(f'{output_dir}{log_file}_structured.csv')
-
+    
     # data preprocess
     df['datetime'] = pd.to_datetime(df['Time'], format='%Y-%m-%d-%H:%M:%S')
     # df["Label"] = df["Label"].apply(lambda x: int(x != "-"))
     df['timestamp'] = df["datetime"].values.astype(np.int64) // 10 ** 9
     df['deltaT'] = df['datetime'].diff() / np.timedelta64(1, 's')
     df['deltaT'].fillna(0)
+    
+    df_slice = True
+    if df_slice:
+      df = df.iloc[11255:120840]
+      df = df.reset_index(drop=True)
+      print(df.info())
     # convert time to UTC timestamp
     # df['deltaT'] = df['datetime'].apply(lambda t: (t - pd.Timestamp("1970-01-01")) // pd.Timedelta('1s'))
 
