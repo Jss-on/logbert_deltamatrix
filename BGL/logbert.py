@@ -92,6 +92,10 @@ if __name__ == "__main__":
     predict_single_parser.set_defaults(mode='predict_single')
     predict_single_parser.add_argument("-s", "--sequence", type=str, default="")
 
+    predict_eval_parser = subparsers.add_parser('predict_eval')
+    predict_eval_parser.set_defaults(mode='predict_eval')
+    predict_eval_parser.add_argument("-s", "--sequence", type=str, default="")
+
 
     vocab_parser = subparsers.add_parser('vocab')
     vocab_parser.set_defaults(mode='vocab')
@@ -107,6 +111,10 @@ if __name__ == "__main__":
 
     elif args.mode == 'predict':
         Predictor(options).predict()
+
+    elif args.mode == 'predict_eval':
+        Predictor(options).predict_eval()
+
 
     elif args.mode == 'predict_single':
         inference = Inference(options)
