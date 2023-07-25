@@ -338,4 +338,65 @@ class Predictor():
         elapsed_time = time.time() - start_time
         print('elapsed_time: {}'.format(elapsed_time))
 
+    def predict_eval(self):
+        model = torch.load(self.model_path)
+        model.to(self.device)
+        model.eval()
+        print('model_path: {}'.format(self.model_path))
+
+        start_time = time.time()
+        vocab = WordVocab.load_vocab(self.vocab_path)
+
+        scale = None
+        error_dict = None
+        if self.is_time:
+            with open(self.scale_path, "rb") as f:
+                scale = pickle.load(f)
+
+            with open(self.model_dir + "error_dict.pkl", 'rb') as f:
+                error_dict = pickle.load(f)
+
+        if self.hypersphere_loss:
+            center_dict = torch.load(self.model_dir + "best_center.pt")
+            self.center = center_dict["center"]
+            self.radius = center_dict["radius"]
+            # self.center = self.center.view(1,-1)
+
+
+        print("Data Eval prediction")
+        test_normal_results, test_normal_errors = self.helper(model, self.output_dir, "data_eval", vocab, scale, error_dict)
+        
+        # print("test abnormal predicting")
+        # test_abnormal_results, test_abnormal_errors = self.helper(model, self.output_dir, "test_abnormal", vocab, scale, error_dict)
+
+        print("Saving data eval results")
+        with open(self.model_dir + "data_eval_results", "wb") as f:
+            pickle.dump(test_normal_results, f)
+
+        # print("Saving test abnormal results")
+        # with open(self.model_dir + "test_abnormal_results", "wb") as f:
+        #     pickle.dump(test_abnormal_results, f)
+
+        # print("Saving test normal errors")
+        # with open(self.model_dir + "test_normal_errors.pkl", "wb") as f:
+        #     pickle.dump(test_normal_errors, f)
+
+        # print("Saving test abnormal results")
+        # with open(self.model_dir + "test_abnormal_errors.pkl", "wb") as f:
+        #     pickle.dump(test_abnormal_errors, f)
+
+        # params = {"is_logkey": self.is_logkey, "is_time": self.is_time, "hypersphere_loss": self.hypersphere_loss,
+        #           "hypersphere_loss_test": self.hypersphere_loss_test}
+        # best_th, best_seq_th, FP, TP, TN, FN, P, R, F1 = find_best_threshold(test_normal_results,
+        #                                                                     test_abnormal_results,
+        #                                                                     params=params,
+        #                                                                     th_range=np.arange(10),
+        #                                                                     seq_range=np.arange(0,1,0.1))
+
+        # print("best threshold: {}, best threshold ratio: {}".format(best_th, best_seq_th))
+        # print("TP: {}, TN: {}, FP: {}, FN: {}".format(TP, TN, FP, FN))
+        # print('Precision: {:.2f}%, Recall: {:.2f}%, F1-measure: {:.2f}%'.format(P, R, F1))
+        elapsed_time = time.time() - start_time
+        print('elapsed_time: {}'.format(elapsed_time))
+
 
