@@ -35,7 +35,9 @@ class LogDataset(Dataset):
     def __getitem__(self, idx):
         k, t = self.log_corpus[idx], self.time_corpus[idx]
 
-        k_masked, k_label, t_masked, t_label = self.random_item(k, t)
+        # k_masked, k_label, t_masked, t_label = self.random_item(k, t)
+        #uses fixed_item for now
+        k_masked, k_label, t_masked, t_label = self.fixed_item(k, t)
 
         # [CLS] tag = SOS tag, [SEP] tag = EOS tag
         k = [self.vocab.sos_index] + k_masked
@@ -46,6 +48,62 @@ class LogDataset(Dataset):
         t_label = [self.vocab.pad_index] + t_label
 
         return k, k_label, t, t_label
+        
+    def fixed_item(self, k, t, mask_start_ratio=0.5):
+        tokens = list(k)
+        output_label = []
+    
+        time_intervals = list(t)
+        time_label = []
+    
+        # Determine the index to start masking from
+        mask_start_index = int(len(tokens) * mask_start_ratio)
+    
+        for i, token in enumerate(tokens):
+            # Only mask tokens from mask_start_index onwards
+            if i < mask_start_index:
+                tokens[i] = self.vocab.stoi.get(token, self.vocab.unk_index)
+                output_label.append(0)
+                time_label.append(0)
+                continue
+    
+            time_int = time_intervals[i]
+            prob = random.random()
+            # replace 15% of tokens in a sequence to a masked token
+            if prob < self.mask_ratio:
+                if self.predict_mode:
+                    tokens[i] = self.vocab.mask_index
+                    output_label.append(self.vocab.stoi.get(token, self.vocab.unk_index))
+    
+                    time_label.append(time_int)
+                    time_intervals[i] = 0
+                    continue
+    
+                prob /= self.mask_ratio
+    
+                # 80% randomly change token to mask token
+                if prob < 0.8:
+                    tokens[i] = self.vocab.mask_index
+    
+                # 10% randomly change token to random token
+                elif prob < 0.9:
+                    tokens[i] = random.randrange(len(self.vocab))
+    
+                # 10% randomly change token to current token
+                else:
+                    tokens[i] = self.vocab.stoi.get(token, self.vocab.unk_index)
+    
+                output_label.append(self.vocab.stoi.get(token, self.vocab.unk_index))
+    
+                time_intervals[i] = 0  # time mask value = 0
+                time_label.append(time_int)
+    
+            else:
+                tokens[i] = self.vocab.stoi.get(token, self.vocab.unk_index)
+                output_label.append(0)
+                time_label.append(0)
+    
+        return tokens, output_label, time_intervals, time_label
 
     def random_item(self, k, t):
         tokens = list(k)
