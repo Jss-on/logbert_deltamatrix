@@ -151,7 +151,8 @@ if __name__ == "__main__":
     # Train #
     #########
     df_normal =deeplog_df[deeplog_df["Label"] == 0]
-    df_normal = df_normal.sample(frac=1, random_state=12).reset_index(drop=True) #shuffle
+    # df_normal = df_normal.sample(frac=1, random_state=12).reset_index(drop=True) #shuffle
+    # df_normal = df_normal.reset_index(drop=True)
     normal_len = len(df_normal)
     train_len = int(normal_len * train_ratio)
 
